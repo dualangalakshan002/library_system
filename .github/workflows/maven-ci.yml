@@ -39,8 +39,21 @@ jobs:
       - name: Build with Maven
         run: mvn -B verify --file pom.xml
 
-      # 5. SonarCloud analysis
-      - name: SonarCloud Analysis
+      # 5. SonarCloud analysis (main branch push)
+      - name: SonarCloud Analysis (Push)
+        if: github.event_name == 'push'
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          mvn -B org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
+            -Dsonar.projectKey=dualangalakshan002_library_system \
+            -Dsonar.organization=dualangalakshan002 \
+            -Dsonar.host.url=https://sonarcloud.io \
+            -Dsonar.login=$SONAR_TOKEN
+
+      # 6. SonarCloud analysis (pull request)
+      - name: SonarCloud Analysis (Pull Request)
+        if: github.event_name == 'pull_request'
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           PULL_REQUEST_BRANCH: ${{ github.head_ref }}
@@ -52,6 +65,6 @@ jobs:
             -Dsonar.organization=dualangalakshan002 \
             -Dsonar.host.url=https://sonarcloud.io \
             -Dsonar.login=$SONAR_TOKEN \
-            $(if [ "${{ github.event_name }}" = "pull_request" ]; then
-                echo "-Dsonar.pullrequest.branch=$PULL_REQUEST_BRANCH -Dsonar.pullrequest.key=$PULL_REQUEST_KEY -Dsonar.pullrequest.base=$PULL_REQUEST_BASE";
-              fi)
+            -Dsonar.pullrequest.branch=$PULL_REQUEST_BRANCH \
+            -Dsonar.pullrequest.key=$PULL_REQUEST_KEY \
+            -Dsonar.pullrequest.base=$PULL_REQUEST_BASE
